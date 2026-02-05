@@ -47,5 +47,29 @@
 		"tabs",
 		"bookmarks",
 		"storage"
-	]
+	],
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "{a1b2c3d4-e5f6-7890-abcd-ef1234567890}",
+			"data_collection_permissions": {
+				"storage": {
+					"description": "Stores your preferences and settings locally on your device. No data is sent to external servers."
+				},
+				"tabs": {
+					"description": "Reads tab information to display and search your open tabs.",
+					"required": true,
+					"dataTypes": [
+						"Tab titles and URLs"
+					]
+				},
+				"bookmarks": {
+					"description": "Reads your bookmarks to allow searching and navigation.",
+					"required": true,
+					"dataTypes": [
+						"Bookmark titles and URLs"
+					]
+				}
+			}
+		}
+	}
 }
