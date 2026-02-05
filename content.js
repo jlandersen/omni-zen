@@ -34,6 +34,19 @@ const SITE_ACTIONS = [
 			{ title: 'Repositories', url: 'https://github.com/?tab=repositories' },
 			{ title: 'Trending', url: 'https://github.com/trending' }
 		]
+	},
+	{
+		id: 'reddit',
+		name: 'Reddit',
+		hosts: ['reddit.com', '*.reddit.com', 'old.reddit.com', '*.old.reddit.com'],
+		actions: [
+			{ title: 'Home', path: '/' },
+			{ title: 'Popular', path: '/r/popular/' },
+			{ title: 'All', path: '/r/all/' },
+			{ title: 'Saved', path: '/user/me/saved/' },
+			{ title: 'Messages', path: '/message/inbox/' },
+			{ title: 'Submit', path: '/submit/' }
+		]
 	}
 ];
 
@@ -382,9 +395,11 @@ function buildSiteActionsForHost(hostname) {
 		if (!hostMatches(hostname, site.hosts)) {
 			continue;
 		}
+		const baseUrl = site.baseUrl ? site.baseUrl : `https://${hostname}`;
 		for (const action of site.actions) {
 			actions.push({
 				...action,
+				url: action.url || new URL(action.path || '', baseUrl).toString(),
 				type: 'site-action',
 				siteName: site.name
 			});
