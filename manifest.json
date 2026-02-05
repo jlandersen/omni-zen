@@ -1,7 +1,7 @@
 {
 	"name": "Omni Zen",
 	"description": "A lightweight command palette for tabs and bookmarks. Spiritual successor to Omni.",
-	"version": "1.3.0",
+	"version": "1.4.0",
 	"manifest_version": 3,
 	"action": {
 		"default_popup": "popup.html",
@@ -45,6 +45,7 @@
 	"permissions": [
 		"tabs",
 		"bookmarks",
+		"history",
 		"storage"
 	],
 	"host_permissions": [

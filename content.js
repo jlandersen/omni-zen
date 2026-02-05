@@ -1,7 +1,8 @@
 let isOpen = false;
 let isOpening = false;
 let actions = [];
-let settings = { fuzzySearch: true, groupByType: true };
+let baseActions = [];
+let settings = { fuzzySearch: true, groupByType: true, searchHistory: false };
 let lastInputValue = '';
 let injectionPromise = null;
 let shadowRoot = null;
@@ -67,6 +68,7 @@ function setupEventListeners() {
 	
 	input.addEventListener('input', handleSearch);
 	overlay.addEventListener('click', closeOmni);
+	list.addEventListener('scroll', handleListScroll);
 	
 	list.addEventListener('click', (e) => {
 		const item = e.target.closest('.omni-item');
@@ -76,6 +78,35 @@ function setupEventListeners() {
 	});
 	
 	document.addEventListener('keydown', handleKeyDown);
+}
+
+function handleListScroll() {
+	const list = shadowRoot.querySelector('#omni-list');
+	const stickyHeader = shadowRoot.querySelector('#omni-sticky-header');
+	const headers = list.querySelectorAll('.omni-group-header');
+	
+	if (headers.length === 0) {
+		stickyHeader.classList.remove('visible');
+		return;
+	}
+	
+	let currentHeader = null;
+	const scrollTop = list.scrollTop;
+	
+	for (const header of headers) {
+		if (header.offsetTop <= scrollTop) {
+			currentHeader = header;
+		} else {
+			break;
+		}
+	}
+	
+	if (currentHeader && scrollTop > 0) {
+		stickyHeader.textContent = currentHeader.textContent;
+		stickyHeader.classList.add('visible');
+	} else {
+		stickyHeader.classList.remove('visible');
+	}
 }
 
 function handleSearch(e) {
@@ -107,7 +138,20 @@ function handleSearch(e) {
 	lastInputValue = value;
 	
 	clearTimeout(searchDebounceTimer);
-	searchDebounceTimer = setTimeout(() => {
+	searchDebounceTimer = setTimeout(async () => {
+		let query = value;
+		if (value.startsWith('/history')) {
+			query = value.replace('/history', '').trim();
+		}
+		
+		if (settings.searchHistory && query) {
+			const response = await browser.runtime.sendMessage({ request: 'search-history', query });
+			const historyResults = response?.history || [];
+			actions = [...baseActions, ...historyResults];
+		} else {
+			actions = baseActions;
+		}
+		
 		const filtered = filterActions(actions, value, { fuzzy: settings.fuzzySearch });
 		renderItems(filtered);
 		updateResultsCount(filtered.length, shadowRoot);
@@ -116,7 +160,9 @@ function handleSearch(e) {
 
 function renderItems(items) {
 	const list = shadowRoot.querySelector('#omni-list');
+	const stickyHeader = shadowRoot.querySelector('#omni-sticky-header');
 	list.innerHTML = '';
+	stickyHeader.classList.remove('visible');
 	
 	const defaultIcon = browser.runtime.getURL('assets/logo-16.png');
 	
@@ -125,6 +171,7 @@ function renderItems(items) {
 	if (shouldGroup) {
 		const tabs = items.filter(item => item.type === 'tab');
 		const bookmarks = items.filter(item => item.type === 'bookmark');
+		const history = items.filter(item => item.type === 'history');
 		
 		let globalIndex = 0;
 		
@@ -147,6 +194,18 @@ function renderItems(items) {
 			list.appendChild(bookmarkHeader);
 			
 			bookmarks.forEach((item) => {
+				list.appendChild(createItemElement(item, globalIndex, defaultIcon, shadowRoot));
+				globalIndex++;
+			});
+		}
+		
+		if (history.length > 0) {
+			const historyHeader = document.createElement('div');
+			historyHeader.className = 'omni-group-header';
+			historyHeader.textContent = 'History';
+			list.appendChild(historyHeader);
+			
+			history.forEach((item) => {
 				list.appendChild(createItemElement(item, globalIndex, defaultIcon, shadowRoot));
 				globalIndex++;
 			});
@@ -178,8 +237,9 @@ async function openOmni() {
 			browser.runtime.sendMessage({ request: 'get-actions' }),
 			browser.runtime.sendMessage({ request: 'get-settings' })
 		]);
-		actions = actionsResponse?.actions || [];
-		settings = { fuzzySearch: true, groupByType: true, ...settingsResponse?.settings };
+		baseActions = actionsResponse?.actions || [];
+		actions = baseActions;
+		settings = { fuzzySearch: true, groupByType: true, searchHistory: false, ...settingsResponse?.settings };
 		
 		input.value = '';
 		lastInputValue = '';
@@ -229,6 +289,8 @@ async function handleAction(index) {
 			await browser.runtime.sendMessage({ request: 'switch-tab', tabId });
 		} else if (type === 'bookmark') {
 			await browser.runtime.sendMessage({ request: 'open-bookmark', url });
+		} else if (type === 'history') {
+			await browser.runtime.sendMessage({ request: 'open-history', url });
 		}
 	} catch (error) {
 		console.error('Omni Zen: Action failed', error);

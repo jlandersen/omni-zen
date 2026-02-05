@@ -1,7 +1,8 @@
 let settings = {
 	fetchFavicons: false,
 	fuzzySearch: true,
-	groupByType: true
+	groupByType: true,
+	searchHistory: false
 };
 
 async function loadSettings() {
@@ -60,6 +61,46 @@ async function getAllBookmarks() {
 	}
 }
 
+async function getAllHistory() {
+	try {
+		const historyItems = await browser.history.search({
+			text: '',
+			maxResults: 100,
+			startTime: 0
+		});
+		
+		return historyItems.map(item => ({
+			title: item.title || item.url,
+			url: item.url,
+			type: "history",
+			favIconUrl: getFaviconUrl(item.url)
+		}));
+	} catch (error) {
+		console.error('Omni Zen: Failed to get history', error);
+		return [];
+	}
+}
+
+async function searchHistory(query) {
+	try {
+		const historyItems = await browser.history.search({
+			text: query,
+			maxResults: 100,
+			startTime: 0
+		});
+		
+		return historyItems.map(item => ({
+			title: item.title || item.url,
+			url: item.url,
+			type: "history",
+			favIconUrl: getFaviconUrl(item.url)
+		}));
+	} catch (error) {
+		console.error('Omni Zen: Failed to search history', error);
+		return [];
+	}
+}
+
 async function buildActions() {
 	const actions = [];
 	
@@ -77,6 +118,11 @@ async function buildActions() {
 	
 	const bookmarks = await getAllBookmarks();
 	actions.push(...bookmarks);
+	
+	if (settings.searchHistory) {
+		const history = await getAllHistory();
+		actions.push(...history);
+	}
 	
 	return actions;
 }
@@ -104,6 +150,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 				sendResponse({});
 				break;
 				
+			case "open-history":
+				await browser.tabs.create({ url: message.url });
+				sendResponse({});
+				break;
+				
 			case "close-omni":
 				browser.tabs.sendMessage(sender.tab.id, { request: "close-omni" });
 				sendResponse({});
@@ -117,6 +168,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 				
 			case "get-settings":
 				sendResponse({ settings });
+				break;
+				
+			case "search-history":
+				const historyResults = await searchHistory(message.query);
+				sendResponse({ history: historyResults });
 				break;
 				
 			default:

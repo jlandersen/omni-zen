@@ -1,12 +1,14 @@
 # Changelog
 
-## [TBD]
+## [1.4.0] - 2026-02-05
 
 ### Added
 - Group by type setting to organize search results into Tabs and Bookmarks sections (on by default)
+- Search in browser history (filter with `/h` or `/history`). Off by default, enable in settings.
 
 ### Changed
 - Improvements to fuzzy search
+- Sticky section header when scrolling through grouped results
 
 ## [1.3.0] - 2026-02-05
 

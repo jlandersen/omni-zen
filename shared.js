@@ -2,10 +2,11 @@ const FALLBACK_ICON = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg
 
 const FILTER_SHORTCUTS = {
 	'/t': '/tabs ',
-	'/b': '/bookmarks '
+	'/b': '/bookmarks ',
+	'/h': '/history '
 };
 
-const FILTER_COMMANDS = ['/tabs ', '/bookmarks '];
+const FILTER_COMMANDS = ['/tabs ', '/bookmarks ', '/history '];
 
 /**
  * Fuzzy match a query against a string.
@@ -132,6 +133,9 @@ function filterActions(actions, searchValue, options = {}) {
 	} else if (value.startsWith('/bookmarks')) {
 		typeFilter = 'bookmark';
 		query = value.replace('/bookmarks', '').trim();
+	} else if (value.startsWith('/history')) {
+		typeFilter = 'history';
+		query = value.replace('/history', '').trim();
 	}
 	
 	let filtered = typeFilter 
