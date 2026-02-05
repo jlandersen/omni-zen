@@ -25,11 +25,12 @@ async function injectOmni() {
 				});
 			}
 			
-			const response = await fetch(browser.runtime.getURL('/content.html'));
-			const html = await response.text();
-			const temp = document.createElement('div');
-			temp.innerHTML = html;
-			document.body.appendChild(temp.firstElementChild);
+		const response = await fetch(browser.runtime.getURL('/content.html'));
+		const html = await response.text();
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(html, 'text/html');
+		const element = doc.body.firstElementChild;
+		document.body.appendChild(element);
 			
 			setupEventListeners();
 		} catch (error) {
