@@ -191,6 +191,13 @@
 	text-overflow: ellipsis;
 }
 
+.omni-item-name mark,
+.omni-item-desc mark {
+	background: transparent;
+	color: var(--accent);
+	font-weight: 600;
+}
+
 .omni-item-badge {
 	background: var(--accent);
 	color: white;

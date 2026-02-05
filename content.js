@@ -1,6 +1,7 @@
 let isOpen = false;
 let isOpening = false;
 let actions = [];
+let settings = { fuzzySearch: true };
 let lastInputValue = '';
 let injectionPromise = null;
 
@@ -79,14 +80,14 @@ function handleSearch(e) {
 	if (FILTER_SHORTCUTS[value]) {
 		e.target.value = FILTER_SHORTCUTS[value];
 		lastInputValue = FILTER_SHORTCUTS[value];
-		const filtered = filterActions(actions, FILTER_SHORTCUTS[value]);
+		const filtered = filterActions(actions, FILTER_SHORTCUTS[value], { fuzzy: settings.fuzzySearch });
 		renderItems(filtered);
 		updateResultsCount(filtered.length);
 		return;
 	}
 	
 	lastInputValue = value;
-	const filtered = filterActions(actions, value);
+	const filtered = filterActions(actions, value, { fuzzy: settings.fuzzySearch });
 	renderItems(filtered);
 	updateResultsCount(filtered.length);
 }
@@ -117,13 +118,17 @@ async function openOmni() {
 			return;
 		}
 		
-		const response = await browser.runtime.sendMessage({ request: 'get-actions' });
-		actions = response?.actions || [];
+		const [actionsResponse, settingsResponse] = await Promise.all([
+			browser.runtime.sendMessage({ request: 'get-actions' }),
+			browser.runtime.sendMessage({ request: 'get-settings' })
+		]);
+		actions = actionsResponse?.actions || [];
+		settings = { fuzzySearch: true, ...settingsResponse?.settings };
 		
 		input.value = '';
 		lastInputValue = '';
 		extension.classList.remove('omni-closing');
-		renderItems(actions);
+		renderItems(actions.map(a => ({ ...a, titleIndices: [], urlIndices: [] })));
 		updateResultsCount(actions.length);
 		
 		isOpen = true;

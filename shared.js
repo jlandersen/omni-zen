@@ -7,41 +7,172 @@ const FILTER_SHORTCUTS = {
 
 const FILTER_COMMANDS = ['/tabs ', '/bookmarks '];
 
-function filterActions(actions, searchValue) {
+/**
+ * Fuzzy match a query against a string.
+ * Returns { score, indices } or null if no match.
+ * Higher score = better match.
+ */
+function fuzzyMatch(query, str) {
+	const text = str.toLowerCase();
+	query = query.toLowerCase();
+	
+	let textIdx = 0;
+	let queryIdx = 0;
+	let score = 0;
+	let indices = [];
+	let consecutiveBonus = 0;
+	let prevMatchIdx = -2;
+	
+	while (textIdx < text.length && queryIdx < query.length) {
+		if (text[textIdx] === query[queryIdx]) {
+			indices.push(textIdx);
+			
+			// Consecutive character bonus
+			if (textIdx === prevMatchIdx + 1) {
+				consecutiveBonus += 5;
+				score += consecutiveBonus;
+			} else {
+				consecutiveBonus = 0;
+			}
+			
+			// Word boundary bonus (start of word)
+			if (textIdx === 0 || /[\s\-_/.]/.test(text[textIdx - 1])) {
+				score += 10;
+			}
+			
+			// Early position bonus
+			score += Math.max(0, 20 - textIdx);
+			
+			prevMatchIdx = textIdx;
+			queryIdx++;
+		}
+		textIdx++;
+	}
+	
+	// All query chars must match
+	if (queryIdx !== query.length) {
+		return null;
+	}
+	
+	// Exact match bonus
+	if (text === query) {
+		score += 100;
+	}
+	
+	return { score, indices };
+}
+
+/**
+ * Score an action against a query, checking both title and URL.
+ * Returns { score, titleIndices, urlIndices } or null if no match.
+ */
+function scoreAction(action, query) {
+	const titleMatch = fuzzyMatch(query, action.title);
+	const urlMatch = fuzzyMatch(query, action.url);
+	
+	if (!titleMatch && !urlMatch) {
+		return null;
+	}
+	
+	// Title matches are weighted higher
+	const titleScore = titleMatch ? titleMatch.score * 2 : 0;
+	const urlScore = urlMatch ? urlMatch.score : 0;
+	
+	return {
+		score: titleScore + urlScore,
+		titleIndices: titleMatch?.indices || [],
+		urlIndices: urlMatch?.indices || []
+	};
+}
+
+function filterActions(actions, searchValue, options = {}) {
+	const { fuzzy = true } = options;
 	const value = searchValue.toLowerCase();
 	
+	let typeFilter = null;
+	let query = value;
+	
 	if (value.startsWith('/tabs')) {
-		const query = value.replace('/tabs', '').trim();
-		let filtered = actions.filter(a => a.type === 'tab');
-		if (query) {
-			filtered = filtered.filter(a => 
+		typeFilter = 'tab';
+		query = value.replace('/tabs', '').trim();
+	} else if (value.startsWith('/bookmarks')) {
+		typeFilter = 'bookmark';
+		query = value.replace('/bookmarks', '').trim();
+	}
+	
+	let filtered = typeFilter 
+		? actions.filter(a => a.type === typeFilter)
+		: actions;
+	
+	if (!query) {
+		return filtered.map(a => ({ ...a, titleIndices: [], urlIndices: [] }));
+	}
+	
+	if (fuzzy) {
+		// Score and filter using fuzzy search
+		const scored = [];
+		for (const action of filtered) {
+			const result = scoreAction(action, query);
+			if (result) {
+				scored.push({
+					...action,
+					_score: result.score,
+					titleIndices: result.titleIndices,
+					urlIndices: result.urlIndices
+				});
+			}
+		}
+		
+		// Sort by score descending
+		scored.sort((a, b) => b._score - a._score);
+		
+		return scored;
+	} else {
+		// Simple substring matching
+		return filtered
+			.filter(a => 
 				a.title.toLowerCase().includes(query) || 
 				a.url.toLowerCase().includes(query)
-			);
+			)
+			.map(a => ({ ...a, titleIndices: [], urlIndices: [] }));
+	}
+}
+
+/**
+ * Highlight matched characters in a string.
+ */
+function highlightMatches(text, indices) {
+	if (!indices || indices.length === 0) {
+		return document.createTextNode(text);
+	}
+	
+	const fragment = document.createDocumentFragment();
+	const indexSet = new Set(indices);
+	let i = 0;
+	
+	while (i < text.length) {
+		if (indexSet.has(i)) {
+			// Find consecutive matches
+			let end = i;
+			while (indexSet.has(end + 1)) {
+				end++;
+			}
+			const mark = document.createElement('mark');
+			mark.textContent = text.slice(i, end + 1);
+			fragment.appendChild(mark);
+			i = end + 1;
+		} else {
+			// Find consecutive non-matches
+			let end = i;
+			while (end + 1 < text.length && !indexSet.has(end + 1)) {
+				end++;
+			}
+			fragment.appendChild(document.createTextNode(text.slice(i, end + 1)));
+			i = end + 1;
 		}
-		return filtered;
 	}
 	
-	if (value.startsWith('/bookmarks')) {
-		const query = value.replace('/bookmarks', '').trim();
-		let filtered = actions.filter(a => a.type === 'bookmark');
-		if (query) {
-			filtered = filtered.filter(a => 
-				a.title.toLowerCase().includes(query) || 
-				a.url.toLowerCase().includes(query)
-			);
-		}
-		return filtered;
-	}
-	
-	if (value) {
-		return actions.filter(a => 
-			a.title.toLowerCase().includes(value) || 
-			a.url.toLowerCase().includes(value)
-		);
-	}
-	
-	return actions;
+	return fragment;
 }
 
 function createItemElement(item, index, defaultIconUrl) {
@@ -62,11 +193,11 @@ function createItemElement(item, index, defaultIconUrl) {
 	
 	const name = document.createElement('div');
 	name.className = 'omni-item-name';
-	name.textContent = item.title;
+	name.appendChild(highlightMatches(item.title, item.titleIndices));
 	
 	const desc = document.createElement('div');
 	desc.className = 'omni-item-desc';
-	desc.textContent = item.url;
+	desc.appendChild(highlightMatches(item.url, item.urlIndices));
 	
 	details.appendChild(name);
 	details.appendChild(desc);
