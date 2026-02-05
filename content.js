@@ -5,6 +5,7 @@ let settings = { fuzzySearch: true };
 let lastInputValue = '';
 let injectionPromise = null;
 let shadowRoot = null;
+let searchDebounceTimer = null;
 
 async function injectOmni() {
 	if (shadowRoot) {
@@ -104,9 +105,13 @@ function handleSearch(e) {
 	}
 	
 	lastInputValue = value;
-	const filtered = filterActions(actions, value, { fuzzy: settings.fuzzySearch });
-	renderItems(filtered);
-	updateResultsCount(filtered.length, shadowRoot);
+	
+	clearTimeout(searchDebounceTimer);
+	searchDebounceTimer = setTimeout(() => {
+		const filtered = filterActions(actions, value, { fuzzy: settings.fuzzySearch });
+		renderItems(filtered);
+		updateResultsCount(filtered.length, shadowRoot);
+	}, 300);
 }
 
 function renderItems(items) {
