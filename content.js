@@ -44,9 +44,9 @@ async function injectOmni() {
 			style.textContent = css;
 			shadowRoot.appendChild(style);
 			
-			const template = document.createElement('template');
-			template.innerHTML = html;
-			shadowRoot.appendChild(template.content.cloneNode(true));
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(html, 'text/html');
+			shadowRoot.appendChild(doc.body.firstElementChild);
 			
 			document.body.appendChild(host);
 			
