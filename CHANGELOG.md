@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.0] - 2026-02-05
+
+### Changed
+- Debounce search input for smoother typing experience
+
 ## [1.2.0] - 2026-02-05
 
 ### Changed
