@@ -1,0 +1,50 @@
+{
+	"name": "Omni Zen",
+	"description": "A lightweight command palette for tabs and bookmarks. Spiritual successor to Omni.",
+	"version": "1.0.0",
+	"manifest_version": 2,
+	"browser_action": {
+		"default_popup": "popup.html",
+		"default_icon": {
+			"16": "assets/logo-16.png",
+			"48": "assets/logo-48.png",
+			"128": "assets/logo-128.png"
+		}
+	},
+	"icons": {
+		"16": "assets/logo-16.png",
+		"48": "assets/logo-48.png",
+		"128": "assets/logo-128.png"
+	},
+	"commands": {
+		"open-omni": {
+			"suggested_key": {
+				"default": "Ctrl+Shift+K"
+			},
+			"description": "Open command menu"
+		}
+	},
+	"background": {
+		"scripts": ["background.js"],
+		"persistent": true
+	},
+	"content_scripts": [
+		{
+			"matches": [
+				"<all_urls>"
+			],
+			"run_at": "document_end",
+			"js": ["shared.js", "content.js"],
+			"css": ["content.css"]
+		}
+	],
+	"web_accessible_resources": [
+		"content.html",
+		"assets/*"
+	],
+	"permissions": [
+		"tabs",
+		"bookmarks",
+		"storage"
+	]
+}

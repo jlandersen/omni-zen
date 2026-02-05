@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Omni Zen Settings</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Omni Zen</h1>
+        <p>Settings</p>
+    </div>
+    
+    <div class="content">
+        <div class="setting-item">
+            <div class="setting-header">
+                <div class="setting-title">Fetch Favicons</div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="fetchFavicons">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-description">
+                Fetch website icons from Google's favicon service. When disabled, a generic icon is shown instead.
+            </div>
+        </div>
+        
+        <div class="shortcut-info">
+            <strong>Keyboard Shortcut:</strong><br>
+            Press <span class="shortcut-key" id="modifierKey">Ctrl</span> + <span class="shortcut-key">Shift</span> + <span class="shortcut-key">K</span> to open Omni on any page
+        </div>
+        
+        <button class="action-button" id="openOmni">
+            Open Command Palette
+        </button>
+        
+        <div class="status-message" id="statusMessage">
+            Settings saved!
+        </div>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>

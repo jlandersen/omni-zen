@@ -1,0 +1,160 @@
+body {
+	width: 320px;
+	margin: 0;
+	padding: 0;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	background: #fafafa;
+}
+
+.header {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	padding: 20px;
+	text-align: center;
+}
+
+.header h1 {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+}
+
+.header p {
+	margin: 5px 0 0 0;
+	font-size: 12px;
+	opacity: 0.9;
+}
+
+.content {
+	padding: 16px;
+}
+
+.setting-item {
+	background: white;
+	border-radius: 8px;
+	padding: 16px;
+	margin-bottom: 12px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.setting-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+.setting-title {
+	font-weight: 600;
+	font-size: 14px;
+	color: #333;
+}
+
+.setting-description {
+	font-size: 12px;
+	color: #666;
+	line-height: 1.4;
+}
+
+.toggle-switch {
+	position: relative;
+	width: 44px;
+	height: 24px;
+	flex-shrink: 0;
+}
+
+.toggle-switch input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.toggle-slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #ccc;
+	transition: 0.3s;
+	border-radius: 24px;
+}
+
+.toggle-slider:before {
+	position: absolute;
+	content: "";
+	height: 18px;
+	width: 18px;
+	left: 3px;
+	bottom: 3px;
+	background-color: white;
+	transition: 0.3s;
+	border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+input:checked + .toggle-slider:before {
+	transform: translateX(20px);
+}
+
+.shortcut-info {
+	background: #f8f9fa;
+	border-radius: 6px;
+	padding: 12px;
+	margin-top: 12px;
+	font-size: 12px;
+	color: #666;
+}
+
+.shortcut-key {
+	display: inline-block;
+	background: white;
+	border: 1px solid #ddd;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-family: monospace;
+	font-size: 11px;
+	margin: 0 2px;
+}
+
+.action-button {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	border: none;
+	padding: 10px 16px;
+	border-radius: 6px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	width: 100%;
+	margin-top: 8px;
+}
+
+.action-button:hover {
+	opacity: 0.9;
+}
+
+.status-message {
+	background: #4caf50;
+	color: white;
+	padding: 8px 12px;
+	border-radius: 6px;
+	font-size: 12px;
+	margin-top: 12px;
+	text-align: center;
+	display: none;
+}
+
+.status-message.show {
+	display: block;
+	animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(-5px); }
+	to { opacity: 1; transform: translateY(0); }
+}

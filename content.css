@@ -1,0 +1,247 @@
+/* Scrollbar styling */
+.omni-extension ::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+.omni-extension ::-webkit-scrollbar-thumb {
+	background-color: rgba(127, 127, 127, 0.6);
+	background-clip: padding-box;
+	border: 2px solid transparent;
+	border-radius: 5px;
+}
+
+.omni-extension ::-webkit-scrollbar-thumb:hover {
+	background-color: rgb(110, 110, 110);
+}
+
+.omni-extension ::-webkit-scrollbar-track {
+	background-color: transparent;
+}
+
+/* Dark/Light theme variables */
+@media (prefers-color-scheme: dark) {
+	.omni-extension {
+		--background: #1e2128;
+		--border: #35373e;
+		--text: #f1f1f1;
+		--text-2: #c5c6ca;
+		--text-3: #a5a5ae;
+		--select: #17191e;
+		--accent: #6068d2;
+		--accent-hover: #484fac;
+		--shortcut: #383e4a;
+		--placeholder: #63687b;
+		--background-2: #292d36;
+	}
+}
+
+@media (prefers-color-scheme: light) {
+	.omni-extension {
+		--background: #fafcff;
+		--border: #f2f3fb;
+		--text: #2b2d41;
+		--text-2: #2b2d41;
+		--text-3: #929db2;
+		--select: #eff3f9;
+		--accent: #6068d2;
+		--accent-hover: #484fac;
+		--shortcut: #dadeea;
+		--placeholder: #bac2d1;
+		--background-2: #f0f4f8;
+	}
+}
+
+/* Reset styles */
+.omni-extension * {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+.omni-extension {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 2147483647;
+	display: none;
+	align-items: flex-start;
+	justify-content: center;
+	animation: fadeIn 0.15s ease-out;
+}
+
+.omni-extension.omni-closing {
+	display: none;
+}
+
+.omni-extension:not(.omni-closing) {
+	display: flex;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+#omni-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(4px);
+}
+
+#omni-wrap {
+	position: relative;
+	z-index: 1;
+	margin-top: 120px;
+	width: 640px;
+	max-width: 90vw;
+}
+
+#omni {
+	background: var(--background);
+	border-radius: 12px;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+	overflow: hidden;
+}
+
+#omni-search {
+	padding: 20px 24px;
+	border-bottom: 1px solid var(--border);
+}
+
+#omni-search input {
+	width: 100%;
+	border: none;
+	outline: none;
+	background: transparent;
+	color: var(--text);
+	font-size: 18px;
+	font-family: inherit;
+}
+
+#omni-search input::placeholder {
+	color: var(--placeholder);
+}
+
+#omni-list {
+	max-height: 400px;
+	overflow-y: auto;
+}
+
+.omni-item {
+	display: flex;
+	align-items: center;
+	padding: 12px 24px;
+	cursor: pointer;
+	transition: background 0.1s ease;
+	border-bottom: 1px solid var(--border);
+}
+
+.omni-item:last-child {
+	border-bottom: none;
+}
+
+.omni-item:hover {
+	background: var(--select);
+}
+
+.omni-item-active {
+	background: var(--select);
+}
+
+.omni-icon {
+	width: 20px;
+	height: 20px;
+	margin-right: 12px;
+	flex-shrink: 0;
+	border-radius: 4px;
+}
+
+.omni-item-details {
+	flex: 1;
+	min-width: 0;
+}
+
+.omni-item-name {
+	color: var(--text);
+	font-size: 14px;
+	font-weight: 500;
+	margin-bottom: 4px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.omni-item-desc {
+	color: var(--text-3);
+	font-size: 12px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.omni-item-badge {
+	background: var(--accent);
+	color: white;
+	font-size: 10px;
+	padding: 3px 8px;
+	border-radius: 4px;
+	margin-left: 8px;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.omni-select {
+	color: var(--text-3);
+	font-size: 12px;
+	margin-left: 12px;
+	display: none;
+}
+
+.omni-item-active .omni-select {
+	display: block;
+}
+
+.omni-shortcut {
+	display: inline-block;
+	background: var(--shortcut);
+	color: var(--text);
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 600;
+	margin-left: 4px;
+}
+
+#omni-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 24px;
+	border-top: 1px solid var(--border);
+	background: var(--background-2);
+}
+
+#omni-results {
+	color: var(--text-3);
+	font-size: 12px;
+}
+
+#omni-arrows {
+	color: var(--text-3);
+	font-size: 12px;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
