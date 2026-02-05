@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-02-05
+
+### Changed
+- Use Shadow DOM for complete style isolation from host pages
+- Add `host_permissions` for proper Manifest V3 compliance
+
 ## [1.1.0] - 2026-02-05
 
 ### Added

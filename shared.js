@@ -175,7 +175,7 @@ function highlightMatches(text, indices) {
 	return fragment;
 }
 
-function createItemElement(item, index, defaultIconUrl) {
+function createItemElement(item, index, defaultIconUrl, rootElement) {
 	const div = document.createElement('div');
 	div.className = 'omni-item' + (index === 0 ? ' omni-item-active' : '');
 	div.dataset.index = index;
@@ -218,7 +218,7 @@ function createItemElement(item, index, defaultIconUrl) {
 	div.appendChild(select);
 	
 	div.addEventListener('mouseenter', () => {
-		document.querySelectorAll('.omni-item-active').forEach(el => {
+		rootElement.querySelectorAll('.omni-item-active').forEach(el => {
 			el.classList.remove('omni-item-active');
 		});
 		div.classList.add('omni-item-active');
@@ -227,10 +227,10 @@ function createItemElement(item, index, defaultIconUrl) {
 	return div;
 }
 
-function handleKeyboardNavigation(e, isOpen, closeCallback, actionCallback) {
+function handleKeyboardNavigation(e, isOpen, closeCallback, actionCallback, rootElement) {
 	if (!isOpen) return false;
 	
-	const activeItem = document.querySelector('.omni-item-active');
+	const activeItem = rootElement.querySelector('.omni-item-active');
 	
 	if (e.key === 'Escape') {
 		e.preventDefault();
@@ -269,8 +269,8 @@ function handleKeyboardNavigation(e, isOpen, closeCallback, actionCallback) {
 	return false;
 }
 
-function updateResultsCount(count) {
-	const results = document.querySelector('#omni-results');
+function updateResultsCount(count, rootElement) {
+	const results = rootElement.querySelector('#omni-results');
 	if (results) {
 		results.textContent = `${count} result${count !== 1 ? 's' : ''}`;
 	}

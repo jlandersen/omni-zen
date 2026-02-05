@@ -1,7 +1,7 @@
 {
 	"name": "Omni Zen",
 	"description": "A lightweight command palette for tabs and bookmarks. Spiritual successor to Omni.",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"manifest_version": 3,
 	"action": {
 		"default_popup": "popup.html",
@@ -33,13 +33,12 @@
 				"<all_urls>"
 			],
 			"run_at": "document_end",
-			"js": ["shared.js", "content.js"],
-			"css": ["content.css"]
+			"js": ["shared.js", "content.js"]
 		}
 	],
 	"web_accessible_resources": [
 		{
-			"resources": ["content.html", "assets/*"],
+			"resources": ["content.html", "content.css", "assets/*"],
 			"matches": ["<all_urls>"]
 		}
 	],
@@ -47,6 +46,9 @@
 		"tabs",
 		"bookmarks",
 		"storage"
+	],
+	"host_permissions": [
+		"<all_urls>"
 	],
 	"browser_specific_settings": {
 		"gecko": {

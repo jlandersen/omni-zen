@@ -1,27 +1,27 @@
 /* Scrollbar styling */
-.omni-extension ::-webkit-scrollbar {
+::-webkit-scrollbar {
 	width: 10px;
 	height: 10px;
 }
 
-.omni-extension ::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
 	background-color: rgba(127, 127, 127, 0.6);
 	background-clip: padding-box;
 	border: 2px solid transparent;
 	border-radius: 5px;
 }
 
-.omni-extension ::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
 	background-color: rgb(110, 110, 110);
 }
 
-.omni-extension ::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
 	background-color: transparent;
 }
 
 /* Dark/Light theme variables */
 @media (prefers-color-scheme: dark) {
-	.omni-extension {
+	:host {
 		--background: #1e2128;
 		--border: #35373e;
 		--text: #f1f1f1;
@@ -37,7 +37,7 @@
 }
 
 @media (prefers-color-scheme: light) {
-	.omni-extension {
+	:host {
 		--background: #fafcff;
 		--border: #f2f3fb;
 		--text: #2b2d41;
@@ -53,7 +53,7 @@
 }
 
 /* Reset styles */
-.omni-extension * {
+*, *::before, *::after {
 	box-sizing: border-box;
 	margin: 0;
 	padding: 0;
@@ -71,6 +71,7 @@
 	align-items: flex-start;
 	justify-content: center;
 	animation: fadeIn 0.15s ease-out;
+	color-scheme: light dark;
 }
 
 .omni-extension.omni-closing {

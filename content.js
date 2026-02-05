@@ -4,9 +4,10 @@ let actions = [];
 let settings = { fuzzySearch: true };
 let lastInputValue = '';
 let injectionPromise = null;
+let shadowRoot = null;
 
 async function injectOmni() {
-	if (document.querySelector('#omni-extension')) {
+	if (shadowRoot) {
 		return;
 	}
 	
@@ -26,12 +27,28 @@ async function injectOmni() {
 				});
 			}
 			
-		const response = await fetch(browser.runtime.getURL('/content.html'));
-		const html = await response.text();
-		const parser = new DOMParser();
-		const doc = parser.parseFromString(html, 'text/html');
-		const element = doc.body.firstElementChild;
-		document.body.appendChild(element);
+			const [htmlResponse, cssResponse] = await Promise.all([
+				fetch(browser.runtime.getURL('/content.html')),
+				fetch(browser.runtime.getURL('/content.css'))
+			]);
+			const [html, css] = await Promise.all([
+				htmlResponse.text(),
+				cssResponse.text()
+			]);
+			
+			const host = document.createElement('div');
+			host.id = 'omni-zen-host';
+			shadowRoot = host.attachShadow({ mode: 'closed' });
+			
+			const style = document.createElement('style');
+			style.textContent = css;
+			shadowRoot.appendChild(style);
+			
+			const template = document.createElement('template');
+			template.innerHTML = html;
+			shadowRoot.appendChild(template.content.cloneNode(true));
+			
+			document.body.appendChild(host);
 			
 			setupEventListeners();
 		} catch (error) {
@@ -43,9 +60,9 @@ async function injectOmni() {
 }
 
 function setupEventListeners() {
-	const input = document.querySelector('#omni-extension input');
-	const overlay = document.querySelector('#omni-overlay');
-	const list = document.querySelector('#omni-list');
+	const input = shadowRoot.querySelector('#omni-extension input');
+	const overlay = shadowRoot.querySelector('#omni-overlay');
+	const list = shadowRoot.querySelector('#omni-list');
 	
 	input.addEventListener('input', handleSearch);
 	overlay.addEventListener('click', closeOmni);
@@ -71,7 +88,7 @@ function handleSearch(e) {
 				e.target.value = '';
 				lastInputValue = '';
 				renderItems(actions);
-				updateResultsCount(actions.length);
+				updateResultsCount(actions.length, shadowRoot);
 				return;
 			}
 		}
@@ -82,23 +99,23 @@ function handleSearch(e) {
 		lastInputValue = FILTER_SHORTCUTS[value];
 		const filtered = filterActions(actions, FILTER_SHORTCUTS[value], { fuzzy: settings.fuzzySearch });
 		renderItems(filtered);
-		updateResultsCount(filtered.length);
+		updateResultsCount(filtered.length, shadowRoot);
 		return;
 	}
 	
 	lastInputValue = value;
 	const filtered = filterActions(actions, value, { fuzzy: settings.fuzzySearch });
 	renderItems(filtered);
-	updateResultsCount(filtered.length);
+	updateResultsCount(filtered.length, shadowRoot);
 }
 
 function renderItems(items) {
-	const list = document.querySelector('#omni-list');
+	const list = shadowRoot.querySelector('#omni-list');
 	list.innerHTML = '';
 	
 	const defaultIcon = browser.runtime.getURL('assets/logo-16.png');
 	items.forEach((item, index) => {
-		list.appendChild(createItemElement(item, index, defaultIcon));
+		list.appendChild(createItemElement(item, index, defaultIcon, shadowRoot));
 	});
 }
 
@@ -111,8 +128,8 @@ async function openOmni() {
 	try {
 		await injectOmni();
 		
-		const extension = document.querySelector('#omni-extension');
-		const input = document.querySelector('#omni-extension input');
+		const extension = shadowRoot.querySelector('#omni-extension');
+		const input = shadowRoot.querySelector('#omni-extension input');
 		
 		if (!extension || !input) {
 			return;
@@ -129,7 +146,7 @@ async function openOmni() {
 		lastInputValue = '';
 		extension.classList.remove('omni-closing');
 		renderItems(actions.map(a => ({ ...a, titleIndices: [], urlIndices: [] })));
-		updateResultsCount(actions.length);
+		updateResultsCount(actions.length, shadowRoot);
 		
 		isOpen = true;
 		
@@ -146,18 +163,18 @@ async function openOmni() {
 
 function closeOmni() {
 	isOpen = false;
-	const extension = document.querySelector('#omni-extension');
+	const extension = shadowRoot?.querySelector('#omni-extension');
 	if (extension) {
 		extension.classList.add('omni-closing');
 	}
 }
 
 function handleKeyDown(e) {
-	handleKeyboardNavigation(e, isOpen, closeOmni, handleAction);
+	handleKeyboardNavigation(e, isOpen, closeOmni, handleAction, shadowRoot);
 }
 
 async function handleAction(index) {
-	const items = document.querySelectorAll('#omni-list .omni-item');
+	const items = shadowRoot.querySelectorAll('#omni-list .omni-item');
 	const item = items[index];
 	
 	if (!item) return;
