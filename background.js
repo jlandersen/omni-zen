@@ -2,7 +2,8 @@ let settings = {
 	fetchFavicons: false,
 	fuzzySearch: true,
 	groupByType: true,
-	searchHistory: false
+	searchHistory: false,
+	siteActions: true
 };
 
 async function loadSettings() {
@@ -81,6 +82,24 @@ async function getAllHistory() {
 	}
 }
 
+async function getSiteActions() {
+	try {
+		const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true });
+		if (!activeTab || !activeTab.id) {
+			return [];
+		}
+		const response = await browser.tabs.sendMessage(activeTab.id, { request: 'get-site-actions' });
+		const actions = response?.actions || [];
+		return actions.map(action => ({
+			...action,
+			tabId: activeTab.id,
+			favIconUrl: action.favIconUrl || activeTab.favIconUrl || getFaviconUrl(action.url)
+		}));
+	} catch {
+		return [];
+	}
+}
+
 async function searchHistory(query) {
 	try {
 		const historyItems = await browser.history.search({
@@ -123,6 +142,11 @@ async function buildActions() {
 		const history = await getAllHistory();
 		actions.push(...history);
 	}
+
+	if (settings.siteActions) {
+		const siteActions = await getSiteActions();
+		actions.push(...siteActions);
+	}
 	
 	return actions;
 }
@@ -152,6 +176,15 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 				
 			case "open-history":
 				await browser.tabs.create({ url: message.url });
+				sendResponse({});
+				break;
+			
+			case "open-site-action":
+				if (message.tabId) {
+					await browser.tabs.update(message.tabId, { url: message.url, active: true });
+				} else {
+					await browser.tabs.create({ url: message.url });
+				}
 				sendResponse({});
 				break;
 				

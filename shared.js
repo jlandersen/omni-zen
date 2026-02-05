@@ -243,10 +243,10 @@ function createItemElement(item, index, defaultIconUrl, rootElement) {
 	div.appendChild(icon);
 	div.appendChild(details);
 	
-	if (item.type === 'tab') {
+	if (item.type === 'tab' || item.type === 'site-action') {
 		const badge = document.createElement('span');
 		badge.className = 'omni-item-badge';
-		badge.textContent = item.active ? 'active' : 'tab';
+		badge.textContent = item.type === 'site-action' ? 'site' : (item.active ? 'active' : 'tab');
 		div.appendChild(badge);
 	}
 	

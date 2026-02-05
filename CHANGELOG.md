@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Site actions for supported pages (toggle in settings)
+
 ## [1.4.0] - 2026-02-05
 
 ### Added

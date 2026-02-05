@@ -2,7 +2,8 @@ let settings = {
 	fetchFavicons: false,
 	fuzzySearch: true,
 	groupByType: true,
-	searchHistory: false
+	searchHistory: false,
+	siteActions: true
 };
 
 const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -35,11 +36,13 @@ function updateUI() {
 	const fuzzySearch = document.getElementById('fuzzySearch');
 	const groupByType = document.getElementById('groupByType');
 	const searchHistory = document.getElementById('searchHistory');
+	const siteActions = document.getElementById('siteActions');
 	const modifierKey = document.getElementById('modifierKey');
 	if (fetchFavicons) fetchFavicons.checked = settings.fetchFavicons;
 	if (fuzzySearch) fuzzySearch.checked = settings.fuzzySearch;
 	if (groupByType) groupByType.checked = settings.groupByType;
 	if (searchHistory) searchHistory.checked = settings.searchHistory;
+	if (siteActions) siteActions.checked = settings.siteActions;
 	if (modifierKey) modifierKey.textContent = isMac ? 'Cmd' : 'Ctrl';
 }
 
@@ -60,6 +63,7 @@ function initPopup() {
 	const fuzzySearchEl = document.getElementById('fuzzySearch');
 	const groupByTypeEl = document.getElementById('groupByType');
 	const searchHistoryEl = document.getElementById('searchHistory');
+	const siteActionsEl = document.getElementById('siteActions');
 	const openOmniEl = document.getElementById('openOmni');
 	
 	if (fetchFaviconsEl) {
@@ -86,6 +90,13 @@ function initPopup() {
 	if (searchHistoryEl) {
 		searchHistoryEl.addEventListener('change', async (e) => {
 			settings.searchHistory = e.target.checked;
+			await saveSettings();
+		});
+	}
+
+	if (siteActionsEl) {
+		siteActionsEl.addEventListener('change', async (e) => {
+			settings.siteActions = e.target.checked;
 			await saveSettings();
 		});
 	}

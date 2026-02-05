@@ -2,7 +2,7 @@ let isOpen = false;
 let isOpening = false;
 let actions = [];
 let baseActions = [];
-let settings = { fuzzySearch: true, groupByType: true, searchHistory: false };
+let settings = { fuzzySearch: true, groupByType: true, searchHistory: false, siteActions: true };
 let lastInputValue = '';
 let injectionPromise = null;
 let shadowRoot = null;
@@ -172,8 +172,32 @@ function renderItems(items) {
 		const tabs = items.filter(item => item.type === 'tab');
 		const bookmarks = items.filter(item => item.type === 'bookmark');
 		const history = items.filter(item => item.type === 'history');
+		const siteActions = items.filter(item => item.type === 'site-action');
 		
 		let globalIndex = 0;
+		
+		if (siteActions.length > 0) {
+			const grouped = {};
+			for (const action of siteActions) {
+				const name = action.siteName || 'Site Actions';
+				if (!grouped[name]) {
+					grouped[name] = [];
+				}
+				grouped[name].push(action);
+			}
+			
+			for (const [name, actions] of Object.entries(grouped)) {
+				const siteHeader = document.createElement('div');
+				siteHeader.className = 'omni-group-header';
+				siteHeader.textContent = name;
+				list.appendChild(siteHeader);
+				
+				actions.forEach((item) => {
+					list.appendChild(createItemElement(item, globalIndex, defaultIcon, shadowRoot));
+					globalIndex++;
+				});
+			}
+		}
 		
 		if (tabs.length > 0) {
 			const tabHeader = document.createElement('div');
@@ -239,7 +263,7 @@ async function openOmni() {
 		]);
 		baseActions = actionsResponse?.actions || [];
 		actions = baseActions;
-		settings = { fuzzySearch: true, groupByType: true, searchHistory: false, ...settingsResponse?.settings };
+		settings = { fuzzySearch: true, groupByType: true, searchHistory: false, siteActions: true, ...settingsResponse?.settings };
 		
 		input.value = '';
 		lastInputValue = '';
@@ -291,6 +315,8 @@ async function handleAction(index) {
 			await browser.runtime.sendMessage({ request: 'open-bookmark', url });
 		} else if (type === 'history') {
 			await browser.runtime.sendMessage({ request: 'open-history', url });
+		} else if (type === 'site-action') {
+			await browser.runtime.sendMessage({ request: 'open-site-action', url, tabId });
 		}
 	} catch (error) {
 		console.error('Omni Zen: Action failed', error);
@@ -306,5 +332,60 @@ browser.runtime.onMessage.addListener((message) => {
 		}
 	} else if (message.request === 'close-omni') {
 		closeOmni();
+	} else if (message.request === 'get-site-actions') {
+		return Promise.resolve({ actions: getSiteActions() });
 	}
 });
+
+function getSiteActions() {
+	try {
+		const hostname = window.location.hostname || '';
+		if (isYouTubeHost(hostname)) {
+			return [
+				{
+					title: 'Subscriptions',
+					url: 'https://www.youtube.com/feed/subscriptions',
+					type: 'site-action',
+					siteName: 'YouTube'
+				},
+				{
+					title: 'Library',
+					url: 'https://www.youtube.com/feed/library',
+					type: 'site-action',
+					siteName: 'YouTube'
+				},
+				{
+					title: 'History',
+					url: 'https://www.youtube.com/feed/history',
+					type: 'site-action',
+					siteName: 'YouTube'
+				},
+				{
+					title: 'Watch Later',
+					url: 'https://www.youtube.com/playlist?list=WL',
+					type: 'site-action',
+					siteName: 'YouTube'
+				},
+				{
+					title: 'Liked videos',
+					url: 'https://www.youtube.com/playlist?list=LL',
+					type: 'site-action',
+					siteName: 'YouTube'
+				},
+				{
+					title: 'Shorts',
+					url: 'https://www.youtube.com/shorts',
+					type: 'site-action',
+					siteName: 'YouTube'
+				}
+			];
+		}
+	} catch {
+		return [];
+	}
+	return [];
+}
+
+function isYouTubeHost(hostname) {
+	return hostname === 'youtube.com' || hostname.endsWith('.youtube.com');
+}
