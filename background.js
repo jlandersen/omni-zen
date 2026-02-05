@@ -1,6 +1,7 @@
 let settings = {
 	fetchFavicons: false,
-	fuzzySearch: true
+	fuzzySearch: true,
+	groupByType: true
 };
 
 async function loadSettings() {

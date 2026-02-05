@@ -27,7 +27,6 @@ function fuzzyMatch(query, str) {
 		if (text[textIdx] === query[queryIdx]) {
 			indices.push(textIdx);
 			
-			// Consecutive character bonus
 			if (textIdx === prevMatchIdx + 1) {
 				consecutiveBonus += 5;
 				score += consecutiveBonus;
@@ -35,12 +34,10 @@ function fuzzyMatch(query, str) {
 				consecutiveBonus = 0;
 			}
 			
-			// Word boundary bonus (start of word)
 			if (textIdx === 0 || /[\s\-_/.]/.test(text[textIdx - 1])) {
 				score += 10;
 			}
 			
-			// Early position bonus
 			score += Math.max(0, 20 - textIdx);
 			
 			prevMatchIdx = textIdx;
@@ -49,12 +46,10 @@ function fuzzyMatch(query, str) {
 		textIdx++;
 	}
 	
-	// All query chars must match
 	if (queryIdx !== query.length) {
 		return null;
 	}
 	
-	// Exact match bonus
 	if (text === query) {
 		score += 100;
 	}
@@ -74,7 +69,6 @@ function scoreAction(action, query) {
 		return null;
 	}
 	
-	// Title matches are weighted higher
 	const titleScore = titleMatch ? titleMatch.score * 2 : 0;
 	const urlScore = urlMatch ? urlMatch.score : 0;
 	
@@ -105,11 +99,12 @@ function filterActions(actions, searchValue, options = {}) {
 		: actions;
 	
 	if (!query) {
-		return filtered.map(a => ({ ...a, titleIndices: [], urlIndices: [] }));
+		const mapped = filtered.map(a => ({ ...a, titleIndices: [], urlIndices: [] }));
+		mapped._hasTypeFilter = !!typeFilter;
+		return mapped;
 	}
 	
 	if (fuzzy) {
-		// Score and filter using fuzzy search
 		const scored = [];
 		for (const action of filtered) {
 			const result = scoreAction(action, query);
@@ -123,18 +118,19 @@ function filterActions(actions, searchValue, options = {}) {
 			}
 		}
 		
-		// Sort by score descending
 		scored.sort((a, b) => b._score - a._score);
-		
+		scored._hasTypeFilter = !!typeFilter;
 		return scored;
 	} else {
-		// Simple substring matching
-		return filtered
+		const matched = filtered
 			.filter(a => 
 				a.title.toLowerCase().includes(query) || 
 				a.url.toLowerCase().includes(query)
 			)
 			.map(a => ({ ...a, titleIndices: [], urlIndices: [] }));
+		
+		matched._hasTypeFilter = !!typeFilter;
+		return matched;
 	}
 }
 
@@ -152,7 +148,6 @@ function highlightMatches(text, indices) {
 	
 	while (i < text.length) {
 		if (indexSet.has(i)) {
-			// Find consecutive matches
 			let end = i;
 			while (indexSet.has(end + 1)) {
 				end++;
@@ -162,7 +157,6 @@ function highlightMatches(text, indices) {
 			fragment.appendChild(mark);
 			i = end + 1;
 		} else {
-			// Find consecutive non-matches
 			let end = i;
 			while (end + 1 < text.length && !indexSet.has(end + 1)) {
 				end++;
@@ -240,20 +234,41 @@ function handleKeyboardNavigation(e, isOpen, closeCallback, actionCallback, root
 	
 	if (e.key === 'ArrowDown') {
 		e.preventDefault();
-		if (activeItem && activeItem.nextElementSibling) {
-			activeItem.classList.remove('omni-item-active');
-			activeItem.nextElementSibling.classList.add('omni-item-active');
-			activeItem.nextElementSibling.scrollIntoView({ block: 'nearest' });
+		if (activeItem) {
+			let next = activeItem.nextElementSibling;
+			while (next && next.classList.contains('omni-group-header')) {
+				next = next.nextElementSibling;
+			}
+			if (next && next.classList.contains('omni-item')) {
+				activeItem.classList.remove('omni-item-active');
+				next.classList.add('omni-item-active');
+				next.scrollIntoView({ block: 'nearest' });
+			}
 		}
 		return true;
 	}
 	
 	if (e.key === 'ArrowUp') {
 		e.preventDefault();
-		if (activeItem && activeItem.previousElementSibling) {
-			activeItem.classList.remove('omni-item-active');
-			activeItem.previousElementSibling.classList.add('omni-item-active');
-			activeItem.previousElementSibling.scrollIntoView({ block: 'nearest' });
+		if (activeItem) {
+			let prev = activeItem.previousElementSibling;
+			let groupHeader = null;
+			
+			while (prev && prev.classList.contains('omni-group-header')) {
+				groupHeader = prev;
+				prev = prev.previousElementSibling;
+			}
+			
+			if (prev && prev.classList.contains('omni-item')) {
+				activeItem.classList.remove('omni-item-active');
+				prev.classList.add('omni-item-active');
+				prev.scrollIntoView({ block: 'nearest' });
+				
+				let checkPrev = prev.previousElementSibling;
+				if (checkPrev && checkPrev.classList.contains('omni-group-header')) {
+					checkPrev.scrollIntoView({ block: 'start' });
+				}
+			}
 		}
 		return true;
 	}

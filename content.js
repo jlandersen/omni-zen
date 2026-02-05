@@ -1,7 +1,7 @@
 let isOpen = false;
 let isOpening = false;
 let actions = [];
-let settings = { fuzzySearch: true };
+let settings = { fuzzySearch: true, groupByType: true };
 let lastInputValue = '';
 let injectionPromise = null;
 let shadowRoot = null;
@@ -119,9 +119,43 @@ function renderItems(items) {
 	list.innerHTML = '';
 	
 	const defaultIcon = browser.runtime.getURL('assets/logo-16.png');
-	items.forEach((item, index) => {
-		list.appendChild(createItemElement(item, index, defaultIcon, shadowRoot));
-	});
+	
+	const shouldGroup = settings.groupByType && !items._hasTypeFilter && items.length > 0;
+	
+	if (shouldGroup) {
+		const tabs = items.filter(item => item.type === 'tab');
+		const bookmarks = items.filter(item => item.type === 'bookmark');
+		
+		let globalIndex = 0;
+		
+		if (tabs.length > 0) {
+			const tabHeader = document.createElement('div');
+			tabHeader.className = 'omni-group-header';
+			tabHeader.textContent = 'Tabs';
+			list.appendChild(tabHeader);
+			
+			tabs.forEach((item) => {
+				list.appendChild(createItemElement(item, globalIndex, defaultIcon, shadowRoot));
+				globalIndex++;
+			});
+		}
+		
+		if (bookmarks.length > 0) {
+			const bookmarkHeader = document.createElement('div');
+			bookmarkHeader.className = 'omni-group-header';
+			bookmarkHeader.textContent = 'Bookmarks';
+			list.appendChild(bookmarkHeader);
+			
+			bookmarks.forEach((item) => {
+				list.appendChild(createItemElement(item, globalIndex, defaultIcon, shadowRoot));
+				globalIndex++;
+			});
+		}
+	} else {
+		items.forEach((item, index) => {
+			list.appendChild(createItemElement(item, index, defaultIcon, shadowRoot));
+		});
+	}
 }
 
 async function openOmni() {
@@ -145,7 +179,7 @@ async function openOmni() {
 			browser.runtime.sendMessage({ request: 'get-settings' })
 		]);
 		actions = actionsResponse?.actions || [];
-		settings = { fuzzySearch: true, ...settingsResponse?.settings };
+		settings = { fuzzySearch: true, groupByType: true, ...settingsResponse?.settings };
 		
 		input.value = '';
 		lastInputValue = '';
@@ -212,5 +246,3 @@ browser.runtime.onMessage.addListener((message) => {
 		closeOmni();
 	}
 });
-
-// Injection is now lazy - only happens when openOmni() is called
