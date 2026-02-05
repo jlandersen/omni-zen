@@ -13,6 +13,7 @@ async function loadSettings() {
 		updateUI();
 	} catch (error) {
 		console.error('Omni Zen: Failed to load settings', error);
+		updateUI();
 	}
 }
 
@@ -27,31 +28,54 @@ async function saveSettings() {
 }
 
 function updateUI() {
-	document.getElementById('fetchFavicons').checked = settings.fetchFavicons;
-	document.getElementById('modifierKey').textContent = isMac ? 'Cmd' : 'Ctrl';
+	const fetchFavicons = document.getElementById('fetchFavicons');
+	const modifierKey = document.getElementById('modifierKey');
+	if (fetchFavicons) fetchFavicons.checked = settings.fetchFavicons;
+	if (modifierKey) modifierKey.textContent = isMac ? 'Cmd' : 'Ctrl';
 }
 
 function showStatus() {
 	const statusEl = document.getElementById('statusMessage');
-	statusEl.classList.add('show');
-	setTimeout(() => {
-		statusEl.classList.remove('show');
-	}, 2000);
+	if (statusEl) {
+		statusEl.classList.add('show');
+		setTimeout(() => {
+			statusEl.classList.remove('show');
+		}, 2000);
+	}
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-	document.getElementById('fetchFavicons').addEventListener('change', async (e) => {
-		settings.fetchFavicons = e.target.checked;
-		await saveSettings();
-	});
+function initPopup() {
+	updateUI();
+	
+	const fetchFaviconsEl = document.getElementById('fetchFavicons');
+	const openOmniEl = document.getElementById('openOmni');
+	
+	if (fetchFaviconsEl) {
+		fetchFaviconsEl.addEventListener('change', async (e) => {
+			settings.fetchFavicons = e.target.checked;
+			await saveSettings();
+		});
+	}
 
-	document.getElementById('openOmni').addEventListener('click', async () => {
-		const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-		if (tabs[0]) {
-			browser.tabs.sendMessage(tabs[0].id, { request: 'toggle-omni' });
-			window.close();
-		}
-	});
+	if (openOmniEl) {
+		openOmniEl.addEventListener('click', async () => {
+			try {
+				const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+				if (tabs[0]) {
+					await browser.tabs.sendMessage(tabs[0].id, { request: 'toggle-omni' });
+					window.close();
+				}
+			} catch (error) {
+				console.error('Omni Zen: Failed to open command palette', error);
+			}
+		});
+	}
 
 	loadSettings();
-});
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initPopup);
+} else {
+	initPopup();
+}

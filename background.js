@@ -124,8 +124,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	return true;
 });
 
-loadSettings();
-
 browser.commands.onCommand.addListener((command) => {
 	if (command === "open-omni") {
 		browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
@@ -133,3 +131,5 @@ browser.commands.onCommand.addListener((command) => {
 		});
 	}
 });
+
+loadSettings();

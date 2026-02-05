@@ -185,8 +185,4 @@ browser.runtime.onMessage.addListener((message) => {
 	}
 });
 
-if (document.readyState === 'loading') {
-	document.addEventListener('DOMContentLoaded', injectOmni);
-} else {
-	injectOmni();
-}
+// Injection is now lazy - only happens when openOmni() is called
