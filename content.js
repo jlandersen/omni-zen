@@ -1,33 +1,43 @@
 let isOpen = false;
+let isOpening = false;
 let actions = [];
 let lastInputValue = '';
+let injectionPromise = null;
 
 async function injectOmni() {
 	if (document.querySelector('#omni-extension')) {
 		return;
 	}
 	
-	try {
-		if (!document.body) {
-			await new Promise(resolve => {
-				if (document.readyState === 'loading') {
-					document.addEventListener('DOMContentLoaded', resolve);
-				} else {
-					resolve();
-				}
-			});
-		}
-		
-		const response = await fetch(browser.runtime.getURL('/content.html'));
-		const html = await response.text();
-		const temp = document.createElement('div');
-		temp.innerHTML = html;
-		document.body.appendChild(temp.firstElementChild);
-		
-		setupEventListeners();
-	} catch (error) {
-		console.error('Omni Zen: Failed to inject', error);
+	if (injectionPromise) {
+		return injectionPromise;
 	}
+	
+	injectionPromise = (async () => {
+		try {
+			if (!document.body) {
+				await new Promise(resolve => {
+					if (document.readyState === 'loading') {
+						document.addEventListener('DOMContentLoaded', resolve);
+					} else {
+						resolve();
+					}
+				});
+			}
+			
+			const response = await fetch(browser.runtime.getURL('/content.html'));
+			const html = await response.text();
+			const temp = document.createElement('div');
+			temp.innerHTML = html;
+			document.body.appendChild(temp.firstElementChild);
+			
+			setupEventListeners();
+		} catch (error) {
+			console.error('Omni Zen: Failed to inject', error);
+		}
+	})();
+	
+	return injectionPromise;
 }
 
 function setupEventListeners() {
@@ -91,15 +101,21 @@ function renderItems(items) {
 }
 
 async function openOmni() {
-	isOpen = true;
-	const extension = document.querySelector('#omni-extension');
-	const input = document.querySelector('#omni-extension input');
-	
-	if (!extension || !input) {
+	if (isOpening) {
 		return;
 	}
+	isOpening = true;
 	
 	try {
+		await injectOmni();
+		
+		const extension = document.querySelector('#omni-extension');
+		const input = document.querySelector('#omni-extension input');
+		
+		if (!extension || !input) {
+			return;
+		}
+		
 		const response = await browser.runtime.sendMessage({ request: 'get-actions' });
 		actions = response?.actions || [];
 		
@@ -109,12 +125,16 @@ async function openOmni() {
 		renderItems(actions);
 		updateResultsCount(actions.length);
 		
+		isOpen = true;
+		
 		input.focus();
 		requestAnimationFrame(() => {
 			input.focus();
 		});
 	} catch (error) {
 		console.error('Omni Zen: Failed to get actions', error);
+	} finally {
+		isOpening = false;
 	}
 }
 
@@ -157,7 +177,7 @@ browser.runtime.onMessage.addListener((message) => {
 	if (message.request === 'toggle-omni') {
 		if (isOpen) {
 			closeOmni();
-		} else {
+		} else if (!isOpening) {
 			openOmni();
 		}
 	} else if (message.request === 'close-omni') {
