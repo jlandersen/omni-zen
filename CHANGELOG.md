@@ -5,6 +5,9 @@
 ### Added
 - Group by type setting to organize search results into Tabs and Bookmarks sections (on by default)
 
+### Changed
+- Improvements to fuzzy search
+
 ## [1.3.0] - 2026-02-05
 
 ### Changed

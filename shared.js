@@ -58,24 +58,64 @@ function fuzzyMatch(query, str) {
 }
 
 /**
- * Score an action against a query, checking both title and URL.
+ * Score an action against a query, checking title, URL, and combined.
  * Returns { score, titleIndices, urlIndices } or null if no match.
  */
 function scoreAction(action, query) {
 	const titleMatch = fuzzyMatch(query, action.title);
 	const urlMatch = fuzzyMatch(query, action.url);
 	
-	if (!titleMatch && !urlMatch) {
+	// Also try matching against combined strings in both orders
+	// This allows queries like "ycombinator typing" to match items where
+	// "ycombinator" is in the URL and "typing" is in the title (or vice versa)
+	const titleFirst = action.title + ' ' + action.url;
+	const urlFirst = action.url + ' ' + action.title;
+	const titleFirstMatch = fuzzyMatch(query, titleFirst);
+	const urlFirstMatch = fuzzyMatch(query, urlFirst);
+	
+	// Pick the better combined match
+	const combinedMatch = (titleFirstMatch && urlFirstMatch)
+		? (titleFirstMatch.score >= urlFirstMatch.score ? titleFirstMatch : urlFirstMatch)
+		: (titleFirstMatch || urlFirstMatch);
+	const combinedIsUrlFirst = combinedMatch === urlFirstMatch;
+	
+	if (!titleMatch && !urlMatch && !combinedMatch) {
 		return null;
 	}
 	
 	const titleScore = titleMatch ? titleMatch.score * 2 : 0;
 	const urlScore = urlMatch ? urlMatch.score : 0;
 	
+	// Split combined indices back into title/url indices
+	let combinedTitleIndices = [];
+	let combinedUrlIndices = [];
+	if (combinedMatch) {
+		const firstLen = combinedIsUrlFirst ? action.url.length : action.title.length;
+		for (const idx of combinedMatch.indices) {
+			if (idx < firstLen) {
+				if (combinedIsUrlFirst) {
+					combinedUrlIndices.push(idx);
+				} else {
+					combinedTitleIndices.push(idx);
+				}
+			} else if (idx > firstLen) {
+				// idx > firstLen means it's in the second part (skip the space)
+				if (combinedIsUrlFirst) {
+					combinedTitleIndices.push(idx - firstLen - 1);
+				} else {
+					combinedUrlIndices.push(idx - firstLen - 1);
+				}
+			}
+		}
+	}
+	
+	// Use combined match for highlighting only if individual matches failed
+	const useCombined = combinedMatch && (!titleMatch && !urlMatch);
+	
 	return {
-		score: titleScore + urlScore,
-		titleIndices: titleMatch?.indices || [],
-		urlIndices: urlMatch?.indices || []
+		score: titleScore + urlScore + (combinedMatch ? combinedMatch.score : 0),
+		titleIndices: useCombined ? combinedTitleIndices : (titleMatch?.indices || []),
+		urlIndices: useCombined ? combinedUrlIndices : (urlMatch?.indices || [])
 	};
 }
 
