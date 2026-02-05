@@ -8,6 +8,35 @@ let injectionPromise = null;
 let shadowRoot = null;
 let searchDebounceTimer = null;
 
+const SITE_ACTIONS = [
+	{
+		id: 'youtube',
+		name: 'YouTube',
+		hosts: ['youtube.com', '*.youtube.com'],
+		actions: [
+			{ title: 'Subscriptions', url: 'https://www.youtube.com/feed/subscriptions' },
+			{ title: 'Library', url: 'https://www.youtube.com/feed/library' },
+			{ title: 'History', url: 'https://www.youtube.com/feed/history' },
+			{ title: 'Watch Later', url: 'https://www.youtube.com/playlist?list=WL' },
+			{ title: 'Liked videos', url: 'https://www.youtube.com/playlist?list=LL' },
+			{ title: 'Shorts', url: 'https://www.youtube.com/shorts' }
+		]
+	},
+	{
+		id: 'github',
+		name: 'GitHub',
+		hosts: ['github.com', '*.github.com'],
+		actions: [
+			{ title: 'Notifications', url: 'https://github.com/notifications' },
+			{ title: 'Pull requests', url: 'https://github.com/pulls' },
+			{ title: 'Issues', url: 'https://github.com/issues' },
+			{ title: 'Stars', url: 'https://github.com/stars' },
+			{ title: 'Repositories', url: 'https://github.com/?tab=repositories' },
+			{ title: 'Trending', url: 'https://github.com/trending' }
+		]
+	}
+];
+
 async function injectOmni() {
 	if (shadowRoot) {
 		return;
@@ -340,52 +369,41 @@ browser.runtime.onMessage.addListener((message) => {
 function getSiteActions() {
 	try {
 		const hostname = window.location.hostname || '';
-		if (isYouTubeHost(hostname)) {
-			return [
-				{
-					title: 'Subscriptions',
-					url: 'https://www.youtube.com/feed/subscriptions',
-					type: 'site-action',
-					siteName: 'YouTube'
-				},
-				{
-					title: 'Library',
-					url: 'https://www.youtube.com/feed/library',
-					type: 'site-action',
-					siteName: 'YouTube'
-				},
-				{
-					title: 'History',
-					url: 'https://www.youtube.com/feed/history',
-					type: 'site-action',
-					siteName: 'YouTube'
-				},
-				{
-					title: 'Watch Later',
-					url: 'https://www.youtube.com/playlist?list=WL',
-					type: 'site-action',
-					siteName: 'YouTube'
-				},
-				{
-					title: 'Liked videos',
-					url: 'https://www.youtube.com/playlist?list=LL',
-					type: 'site-action',
-					siteName: 'YouTube'
-				},
-				{
-					title: 'Shorts',
-					url: 'https://www.youtube.com/shorts',
-					type: 'site-action',
-					siteName: 'YouTube'
-				}
-			];
-		}
+		return buildSiteActionsForHost(hostname);
 	} catch {
 		return [];
 	}
 	return [];
 }
 
-function isYouTubeHost(hostname) {
-	return hostname === 'youtube.com' || hostname.endsWith('.youtube.com');
+function buildSiteActionsForHost(hostname) {
+	const actions = [];
+	for (const site of SITE_ACTIONS) {
+		if (!hostMatches(hostname, site.hosts)) {
+			continue;
+		}
+		for (const action of site.actions) {
+			actions.push({
+				...action,
+				type: 'site-action',
+				siteName: site.name
+			});
+		}
+	}
+	return actions;
+}
+
+function hostMatches(hostname, patterns) {
+	if (!hostname) return false;
+	for (const pattern of patterns) {
+		if (pattern.startsWith('*.')) {
+			const suffix = pattern.slice(1);
+			if (hostname.endsWith(suffix)) {
+				return true;
+			}
+		} else if (hostname === pattern) {
+			return true;
+		}
+	}
+	return false;
 }
