@@ -119,7 +119,8 @@ function setupEventListeners() {
 		}
 	});
 	
-	document.addEventListener('keydown', handleKeyDown);
+	// Use capture phase to intercept events before page handlers
+	document.addEventListener('keydown', handleKeyDown, true);
 }
 
 function handleListScroll() {
@@ -152,6 +153,9 @@ function handleListScroll() {
 }
 
 function handleSearch(e) {
+	// Prevent input events from propagating to page handlers
+	e.stopPropagation();
+	
 	const value = e.target.value.toLowerCase();
 	const isDeleting = value.length < lastInputValue.length;
 	

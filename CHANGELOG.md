@@ -2,8 +2,13 @@
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-02-06
+
 ### Added
 - Site actions for supported pages (toggle in settings)
+
+### Fixed
+- Focus being stolen by background page on sites like GitHub and LinkedIn
 
 ## [1.4.0] - 2026-02-05
 

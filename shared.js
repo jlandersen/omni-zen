@@ -268,6 +268,10 @@ function createItemElement(item, index, defaultIconUrl, rootElement) {
 function handleKeyboardNavigation(e, isOpen, closeCallback, actionCallback, rootElement) {
 	if (!isOpen) return false;
 	
+	// Stop all keyboard events from propagating to the page when Omni is open
+	// This prevents sites like GitHub/LinkedIn from stealing focus or handling keys
+	e.stopPropagation();
+	
 	const activeItem = rootElement.querySelector('.omni-item-active');
 	
 	if (e.key === 'Escape') {
